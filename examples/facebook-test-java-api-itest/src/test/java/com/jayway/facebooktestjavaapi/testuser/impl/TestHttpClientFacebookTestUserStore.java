@@ -2,6 +2,15 @@ package com.jayway.facebooktestjavaapi.testuser.impl;
 
 import com.jayway.facebooktestjavaapi.testuser.FacebookTestUserAccount;
 import com.jayway.facebooktestjavaapi.testuser.FacebookTestUserStore;
+import com.jayway.jsonassert.JsonAssert;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpRequestBase;
+import org.hamcrest.Description;
+import org.hamcrest.Factory;
+import org.hamcrest.Matcher;
+import org.hamcrest.TypeSafeMatcher;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -17,11 +26,12 @@ import java.io.InputStream;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
+import java.util.regex.Pattern;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * To execute this integration test, remove the &#64;Ignore annotation and create the file
@@ -51,13 +61,7 @@ public class TestHttpClientFacebookTestUserStore {
 
     @BeforeClass
     public static void beforeAllTests() throws IOException {
-        Properties properties = new Properties();
-        InputStream stream = TestHttpClientFacebookTestUserStore.class.getClassLoader().getResourceAsStream("facebook-app.properties");
-        if (stream == null) {
-            fail("Could not load 'facebook-app.properties");
-        }
-        properties.load(stream);
-        stream.close();
+        Properties properties = getFacebookConnectionProperties();
         facebookStore1 = new HttpClientFacebookTestUserStore(properties.getProperty("facebook.appId1"), properties.getProperty("facebook.appSecret1"));
         facebookStore1.deleteAllTestUsers();
 
@@ -65,6 +69,17 @@ public class TestHttpClientFacebookTestUserStore {
         facebookStore2.deleteAllTestUsers();
 
         account = facebookStore1.createTestUser(true, "");
+    }
+
+    private static Properties getFacebookConnectionProperties() throws IOException {
+        Properties properties = new Properties();
+        InputStream stream = TestHttpClientFacebookTestUserStore.class.getClassLoader().getResourceAsStream("facebook-app.properties");
+        if (stream == null) {
+            fail("Could not load 'facebook-app.properties");
+        }
+        properties.load(stream);
+        stream.close();
+        return properties;
     }
 
     @AfterClass
@@ -81,6 +96,32 @@ public class TestHttpClientFacebookTestUserStore {
     @After
     public void afterEachTest() {
         deleteCreatedAccounts();
+    }
+
+    /**
+     * This test provides a mock HttpClient which will cause an IllegalArgumentException when trying to get
+     * test users, because no communication takes place to the Facebook server.
+     *
+     * @throws Exception If something else fails
+     */
+    @Test
+    public void testCreateTestUserStoreWithProvidedHttpClient() throws Exception {
+        Properties properties = getFacebookConnectionProperties();
+
+        HttpClient httpClient = mock(HttpClient.class);
+        HttpResponse response = mock(HttpResponse.class);
+        HttpEntity entity = mock(HttpEntity.class);
+
+        when(httpClient.execute(any(HttpRequestBase.class))).thenReturn(response);
+        when(response.getEntity()).thenReturn(entity);
+
+        HttpClientFacebookTestUserStore testUserStore = new HttpClientFacebookTestUserStore(properties.getProperty("facebook.appId1"), properties.getProperty("facebook.appSecret1"), httpClient);
+
+        try {
+            testUserStore.getAllTestUsers();
+        } catch (IllegalArgumentException e) {
+            assertEquals("Could not get access token for provided authentication", e.getMessage());
+        }
     }
 
     @Test
@@ -122,14 +163,37 @@ public class TestHttpClientFacebookTestUserStore {
     }
 
     @Test
-    public void testGetUserDetails() {
+    public void testGetUserDetails() throws java.text.ParseException {
         String userDetails = account.getUserDetails();
 
-        assertTrue(userDetails.contains("name"));
-        assertTrue(userDetails.contains("first_name"));
-        assertTrue(userDetails.contains("last_name"));
-        assertTrue(userDetails.contains("link"));
-        assertTrue(userDetails.contains("gender"));
+        JsonAssert.with(userDetails).assertThat("$.name", RegExMatcher.regExMatches("\\w+(?:\\s+\\w+)*"));
+        JsonAssert.with(userDetails).assertThat("$.first_name", RegExMatcher.regExMatches("\\w+"));
+        JsonAssert.with(userDetails).assertThat("$.middle_name", RegExMatcher.regExMatches("(?:\\w+)*"));
+        JsonAssert.with(userDetails).assertThat("$.last_name", RegExMatcher.regExMatches("\\w+"));
+    }
+
+    private static class RegExMatcher extends TypeSafeMatcher<String> {
+
+        private final Pattern pattern;
+
+        public RegExMatcher(String matchExpression) {
+            pattern = Pattern.compile(matchExpression);
+        }
+
+        @Override
+        public boolean matchesSafely(String toCompare) {
+            java.util.regex.Matcher matcher = pattern.matcher(toCompare);
+            return matcher.matches();
+        }
+
+        public void describeTo(Description description) {
+            description.appendText("does not match expression '" + pattern.pattern() + "'");
+        }
+
+        @Factory
+        public static <T> Matcher<String> regExMatches(String matchExpression) {
+            return new RegExMatcher(matchExpression);
+        }
     }
 
     @Test
@@ -218,20 +282,16 @@ public class TestHttpClientFacebookTestUserStore {
 
     @Test(expected = IllegalArgumentException.class)
     public void unknownTestUserStoreShouldThrowException() {
-        account.copyToTestUserStore(new FacebookTestUserStore()
-        {
-            public FacebookTestUserAccount createTestUser(boolean appInstalled, String permissions)
-            {
+        account.copyToTestUserStore(new FacebookTestUserStore() {
+            public FacebookTestUserAccount createTestUser(boolean appInstalled, String permissions) {
                 return null;
             }
 
-            public List<FacebookTestUserAccount> getAllTestUsers()
-            {
+            public List<FacebookTestUserAccount> getAllTestUsers() {
                 return null;
             }
 
-            public void deleteAllTestUsers()
-            {
+            public void deleteAllTestUsers() {
 
             }
         }, false, "");

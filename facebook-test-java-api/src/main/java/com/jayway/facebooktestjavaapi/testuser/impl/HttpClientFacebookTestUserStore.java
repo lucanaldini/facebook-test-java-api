@@ -45,17 +45,30 @@ public class HttpClientFacebookTestUserStore implements FacebookTestUserStore {
     private JSONParser jsonParser;
     private final String applicationId;
     private final String applicationSecret;
-    private final HttpClient client = new DefaultHttpClient();
+    private final HttpClient client;
 
     /**
-     * Creates a new instance.
-     * @param applicationId The Facebook application ID on which test users should be registered.
+     * Creates a new instance. For more information, see {@link FacebookTestUserStore}.
+     *
+     * @param applicationId     The Facebook application ID on which test users should be registered.
      * @param applicationSecret The application secret.
+     * @param httpClient        A configured HttpClient which will be used when communicating with Facebook.
      */
-    public HttpClientFacebookTestUserStore(String applicationId, String applicationSecret) {
+    public HttpClientFacebookTestUserStore(String applicationId, String applicationSecret, HttpClient httpClient) {
         this.applicationId = applicationId;
         this.applicationSecret = applicationSecret;
         this.jsonParser = new JSONParser();
+        this.client = httpClient;
+    }
+
+    /**
+     * Creates a new instance. For more information, see {@link FacebookTestUserStore}.
+     *
+     * @param applicationId     The Facebook application ID on which test users should be registered.
+     * @param applicationSecret The application secret.
+     */
+    public HttpClientFacebookTestUserStore(String applicationId, String applicationSecret) {
+        this(applicationId, applicationSecret, new DefaultHttpClient());
     }
 
     private void init() {
@@ -76,11 +89,7 @@ public class HttpClientFacebookTestUserStore implements FacebookTestUserStore {
     public FacebookTestUserAccount createTestUser(boolean appInstalled, String permissions) {
         init();
 
-        if (permissions == null) {
-            permissions = "email,offline_access";
-        }
-
-        String jsonResponse = post("/%s/accounts/test-users", buildList("installed", Boolean.toString(appInstalled), "permissions", permissions), null, applicationId);
+        String jsonResponse = post("/%s/accounts/test-users", buildList("installed", Boolean.toString(appInstalled), "permissions", getPermissionsOrDefault(permissions)), null, applicationId);
 
         log.debug(jsonResponse);
 
@@ -94,6 +103,13 @@ public class HttpClientFacebookTestUserStore implements FacebookTestUserStore {
 
     }
 
+    private String getPermissionsOrDefault(String permissions) {
+        if (permissions == null) {
+            return "email,offline_access";
+        }
+        return permissions;
+    }
+
     public List<FacebookTestUserAccount> getAllTestUsers() {
         init();
 
@@ -102,9 +118,9 @@ public class HttpClientFacebookTestUserStore implements FacebookTestUserStore {
         JSONObject accounts = parseJsonObject(jsonResponse);
 
         LinkedList<FacebookTestUserAccount> result = new LinkedList<FacebookTestUserAccount>();
-        JSONArray data = (JSONArray) accounts.get("data");
-        for (int i = 0; i < data.size(); i++) {
-            JSONObject jsonUser = (JSONObject) data.get(i);
+        JSONArray jsonArray = (JSONArray) accounts.get("data");
+        for (Object element : jsonArray) {
+            JSONObject jsonUser = (JSONObject) element;
             result.add(buildFacebookAccount(jsonUser));
         }
 
@@ -120,13 +136,11 @@ public class HttpClientFacebookTestUserStore implements FacebookTestUserStore {
         }
     }
 
-    String getApplicationId()
-    {
+    String getApplicationId() {
         return applicationId;
     }
 
-    String getAccessToken()
-    {
+    String getAccessToken() {
         return appAccessToken;
     }
 
@@ -143,69 +157,61 @@ public class HttpClientFacebookTestUserStore implements FacebookTestUserStore {
         return get(resource, null, pathParams);
     }
 
-    protected String get(String resource, List<NameValuePair> queryParams, Object... pathParams) {
-        if (queryParams == null) {
-            queryParams = new ArrayList<NameValuePair>();
-        }
+    protected String get(String resource, List<NameValuePair> providedQueryParams, Object... pathParams) {
+        List<NameValuePair> queryParams = ensureList(providedQueryParams);
 
         if (appAccessToken != null && !containsName(queryParams, ACCESS_TOKEN)) {
             queryParams.add(new BasicNameValuePair(ACCESS_TOKEN, appAccessToken));
         }
 
-        HttpGet httpMethod = null;
         try {
-            httpMethod = buildGetResource(resource, queryParams, pathParams);
+            return getRequestResponse(buildGetResource(resource, queryParams, pathParams));
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
         }
 
-        return getRequestResponse(httpMethod);
     }
 
-    protected String post(String resource, List<NameValuePair> queryParams, List<NameValuePair> formParams, Object... pathParams) {
-        if (queryParams == null) {
-            queryParams = new ArrayList<NameValuePair>();
-        }
-        if (formParams == null) {
-            formParams = new ArrayList<NameValuePair>();
-        }
+    protected String post(String resource, List<NameValuePair> providedQueryParams, List<NameValuePair> providedFormParams, Object... pathParams) {
+        List<NameValuePair> queryParams = ensureList(providedQueryParams);
+        List<NameValuePair> formParams = ensureList(providedFormParams);
 
         if (appAccessToken != null && !containsName(formParams, ACCESS_TOKEN)) {
             formParams.add(new BasicNameValuePair(ACCESS_TOKEN, appAccessToken));
         }
 
-        HttpPost httpMethod = null;
         try {
-            httpMethod = buildPostResource(resource, queryParams, formParams, pathParams);
+            return getRequestResponse(buildPostResource(resource, queryParams, formParams, pathParams));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
-        return getRequestResponse(httpMethod);
     }
 
     protected String delete(String resource, Object... pathParams) {
         return delete(resource, null, pathParams);
     }
 
-    protected String delete(String resource, List<NameValuePair> queryParams, Object... pathParams) {
-        if (queryParams == null) {
-            queryParams = new ArrayList<NameValuePair>();
-        }
+    protected String delete(String resource, List<NameValuePair> providedQueryParams, Object... pathParams) {
+        List<NameValuePair> queryParams = ensureList(providedQueryParams);
 
         if (appAccessToken != null && !containsName(queryParams, ACCESS_TOKEN)) {
             queryParams.add(new BasicNameValuePair(ACCESS_TOKEN, appAccessToken));
         }
 
-        HttpDelete httpMethod = null;
         try {
-            httpMethod = buildDeleteResource(resource, queryParams, pathParams);
+            return getRequestResponse(buildDeleteResource(resource, queryParams, pathParams));
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
         }
+    }
 
-        return getRequestResponse(httpMethod);
+    private List<NameValuePair> ensureList(List<NameValuePair> providedQueryParams) {
+        if (providedQueryParams == null) {
+            return new ArrayList<NameValuePair>();
+        }
 
+        return providedQueryParams;
     }
 
     private boolean containsName(List<NameValuePair> queryParams, String name) {
@@ -282,7 +288,7 @@ public class HttpClientFacebookTestUserStore implements FacebookTestUserStore {
             throw new IllegalArgumentException("There must be an even number of query parameters (key, value)");
         }
 
-        for (int i = 0; i < queryParams.length;) {
+        for (int i = 0; i < queryParams.length; ) {
             result.add(new BasicNameValuePair(queryParams[i], queryParams[i + 1]));
             i += 2;
         }

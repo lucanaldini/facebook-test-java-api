@@ -28,12 +28,8 @@ public class HttpClientFacebookTestUserAccount implements FacebookTestUserAccoun
 
     public void copyToOtherApplication(String applicationId, String accessToken, boolean appInstalled, String permissions)
     {
-        if (permissions == null) {
-            permissions = "email,offline_access";
-        }
-
         String result = helper.post("/%s/accounts/test-users",
-                helper.buildList("installed", Boolean.toString(appInstalled), "permissions", permissions, "owner_access_token", helper.getAccessToken()),
+                helper.buildList("installed", Boolean.toString(appInstalled), "permissions", permissions == null ? "email, offline_access" : permissions, "owner_access_token", helper.getAccessToken()),
                 helper.buildList("access_token", accessToken), applicationId);
         log.debug("Copied account: " + result);
     }
