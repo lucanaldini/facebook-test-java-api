@@ -15,10 +15,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -48,6 +45,7 @@ import static org.mockito.Mockito.when;
  * Date: 1/13/11
  * Time: 7:29 AM
  */
+@Ignore
 public class TestHttpClientFacebookTestUserStore {
 
     private static HttpClientFacebookTestUserStore facebookStore1;
