@@ -1,3 +1,9 @@
+Version 1.1.5
+=============
+  o Bugfix for NPE when calling facebookStore.createTestUser(false,"...");
+  o Added possibility of using a provided HttpClient instance in HttpClientFacebookTestUserStore.
+  o Added unit test that displays the use of json-path when asserting data.
+
 Version 1.1.4
 =============
   o Added method in FacebookTestUserAccount for copying a user to another FacebookTestUserStore.
