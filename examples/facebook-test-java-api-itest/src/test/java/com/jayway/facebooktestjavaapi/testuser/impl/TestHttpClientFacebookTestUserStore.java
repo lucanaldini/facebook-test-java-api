@@ -18,7 +18,6 @@ import org.json.simple.parser.ParseException;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -49,7 +48,6 @@ import static org.mockito.Mockito.when;
  * Date: 1/13/11
  * Time: 7:29 AM
  */
-@Ignore
 public class TestHttpClientFacebookTestUserStore {
 
     private static HttpClientFacebookTestUserStore facebookStore1;
@@ -68,7 +66,7 @@ public class TestHttpClientFacebookTestUserStore {
         facebookStore2 = new HttpClientFacebookTestUserStore(properties.getProperty("facebook.appId2"), properties.getProperty("facebook.appSecret2"));
         facebookStore2.deleteAllTestUsers();
 
-        account = facebookStore1.createTestUser(true, "");
+        account = facebookStore1.createTestUser(true, "read_stream");
     }
 
     private static Properties getFacebookConnectionProperties() throws IOException {
@@ -295,6 +293,13 @@ public class TestHttpClientFacebookTestUserStore {
 
             }
         }, false, "");
+    }
+
+    @Test
+    public void testCreateFacebookAccountThatHaveToAcceptPermissions() {
+        FacebookTestUserAccount createdAccount = facebookStore1.createTestUser(false, "email,user_about_me,user_birthday");
+
+        assertNull(createdAccount.accessToken());
     }
 
     // Helpers

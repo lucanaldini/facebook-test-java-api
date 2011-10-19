@@ -26,8 +26,7 @@ public class HttpClientFacebookTestUserAccount implements FacebookTestUserAccoun
         log.debug("Deleted account [{}]: [{}]", id(), result);
     }
 
-    public void copyToOtherApplication(String applicationId, String accessToken, boolean appInstalled, String permissions)
-    {
+    public void copyToOtherApplication(String applicationId, String accessToken, boolean appInstalled, String permissions) {
         String result = helper.post("/%s/accounts/test-users",
                 helper.buildList("installed", Boolean.toString(appInstalled), "permissions", permissions == null ? "email, offline_access" : permissions, "owner_access_token", helper.getAccessToken()),
                 helper.buildList("access_token", accessToken), applicationId);
@@ -116,19 +115,28 @@ public class HttpClientFacebookTestUserAccount implements FacebookTestUserAccoun
     }
 
     public String id() {
-        return jsonUser.get("id").toString();
+        return userDataAsString("id");
     }
 
     public String accessToken() {
-        return jsonUser.get("access_token").toString();
+        return userDataAsString("access_token");
     }
 
     public String loginUrl() {
-        return jsonUser.get("login_url").toString();
+        return userDataAsString("login_url");
     }
 
     public String json() {
         return jsonUser.toJSONString();
+    }
+
+    private String userDataAsString(String data) {
+        if (jsonUser == null) {
+            return null;
+        }
+
+        Object anObject = jsonUser.get(data);
+        return anObject != null ? anObject.toString() : null;
     }
 
     private String get(String resource, Object... pathParams) {
