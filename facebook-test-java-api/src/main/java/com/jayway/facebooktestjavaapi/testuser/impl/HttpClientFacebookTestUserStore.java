@@ -283,6 +283,10 @@ public class HttpClientFacebookTestUserStore implements FacebookTestUserStore {
         return result;
     }
 
+    protected void appendToList(List<NameValuePair> list, String... queryParams) {
+        putInList(list, queryParams);
+    }
+
     private void putInList(List<NameValuePair> result, String[] queryParams) {
         if (queryParams.length % 2 == 1) {
             throw new IllegalArgumentException("There must be an even number of query parameters (key, value)");

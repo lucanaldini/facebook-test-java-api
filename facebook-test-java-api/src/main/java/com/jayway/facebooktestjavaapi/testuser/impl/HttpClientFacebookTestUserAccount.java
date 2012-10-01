@@ -1,10 +1,16 @@
 package com.jayway.facebooktestjavaapi.testuser.impl;
 
+import com.jayway.facebooktestjavaapi.testuser.AccountSettingsChanger;
 import com.jayway.facebooktestjavaapi.testuser.FacebookTestUserAccount;
 import com.jayway.facebooktestjavaapi.testuser.FacebookTestUserStore;
+import org.apache.http.NameValuePair;
 import org.json.simple.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.LinkedList;
+import java.util.List;
+
 
 /**
  * A FacebookTestUserAccount implementation that relies on HttpClientFacebookTestUserStore.
@@ -47,6 +53,11 @@ public class HttpClientFacebookTestUserAccount implements FacebookTestUserAccoun
         log.debug("Creating friend request: " + requestResult);
         String acceptResult = helper.post("/%s/friends/%s", null, helper.buildList("access_token", friend.accessToken()), friend.id(), id());
         log.debug("Accepting friend request: " + acceptResult);
+    }
+
+    public AccountSettingsChanger changeAccountSettings()
+    {
+        return new DefaultAccountSettingsChanger();
     }
 
     public String getFriends() {
@@ -126,6 +137,11 @@ public class HttpClientFacebookTestUserAccount implements FacebookTestUserAccoun
         return userDataAsString("login_url");
     }
 
+    public String getPassword()
+    {
+        return userDataAsString("password");
+    }
+
     public String json() {
         return jsonUser.toJSONString();
     }
@@ -143,4 +159,31 @@ public class HttpClientFacebookTestUserAccount implements FacebookTestUserAccoun
         return helper.get(resource, helper.buildList("access_token", accessToken()), pathParams);
     }
 
+
+    private class DefaultAccountSettingsChanger implements AccountSettingsChanger
+    {
+        private List<NameValuePair> settings = new LinkedList<NameValuePair>();
+
+        public AccountSettingsChanger newName(String name)
+        {
+            helper.appendToList(settings, "name", name);
+            return this;
+        }
+
+
+        public AccountSettingsChanger newPassword(String password)
+        {
+            helper.appendToList(settings,"password", password);
+            return this;
+        }
+
+
+        public void apply()
+        {
+            if (settings.size() > 0) {
+                final String result = helper.post("/%s", settings, null, id());
+                log.debug("Changed settings: " + result);
+            }
+        }
+    }
 }

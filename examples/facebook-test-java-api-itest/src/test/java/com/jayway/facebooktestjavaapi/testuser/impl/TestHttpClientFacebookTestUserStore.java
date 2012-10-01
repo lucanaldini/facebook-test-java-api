@@ -3,6 +3,7 @@ package com.jayway.facebooktestjavaapi.testuser.impl;
 import com.jayway.facebooktestjavaapi.testuser.FacebookTestUserAccount;
 import com.jayway.facebooktestjavaapi.testuser.FacebookTestUserStore;
 import com.jayway.jsonassert.JsonAssert;
+import com.jayway.jsonassert.JsonAsserter;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -24,6 +25,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.regex.Pattern;
 
+import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.*;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
@@ -45,7 +47,7 @@ import static org.mockito.Mockito.when;
  * Date: 1/13/11
  * Time: 7:29 AM
  */
-@Ignore
+
 public class TestHttpClientFacebookTestUserStore {
 
     private static HttpClientFacebookTestUserStore facebookStore1;
@@ -159,6 +161,30 @@ public class TestHttpClientFacebookTestUserStore {
     }
 
     @Test
+    public void testChangeNameAndPassword() throws java.text.ParseException
+    {
+        FacebookTestUserAccount account = createAccount();
+        final String accountId = account.id();
+
+        account.changeAccountSettings().newName("nyttNamn").newPassword("mittlogin").apply();
+
+        assertNameChange(accountId, "nyttNamn");
+    }
+
+
+    private void assertNameChange(String accountId, String name) throws java.text.ParseException
+    {
+        final List<FacebookTestUserAccount> users = facebookStore1.getAllTestUsers();
+
+        for (FacebookTestUserAccount user: users) {
+            if (user.id().equals(accountId)) {
+                JsonAssert.with(user.getUserDetails()).assertThat("$.name", equalTo(name));
+            }
+        }
+    }
+
+
+    @Test
     public void testGetUserDetails() throws java.text.ParseException {
         String userDetails = account.getUserDetails();
 
@@ -166,6 +192,15 @@ public class TestHttpClientFacebookTestUserStore {
         JsonAssert.with(userDetails).assertThat("$.first_name", RegExMatcher.regExMatches("\\w+"));
         JsonAssert.with(userDetails).assertThat("$.middle_name", RegExMatcher.regExMatches("(?:\\w+)*"));
         JsonAssert.with(userDetails).assertThat("$.last_name", RegExMatcher.regExMatches("\\w+"));
+    }
+
+    @Test
+    public void testGetUserPassword()
+    {
+        final String password = account.getPassword();
+
+        assertNotNull(password);
+        assertFalse(password.isEmpty());
     }
 
     private static class RegExMatcher extends TypeSafeMatcher<String> {

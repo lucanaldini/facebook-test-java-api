@@ -4,8 +4,10 @@ performing test users operations on Facebook.
 In order to run the tests, a file called 'facebook-app.properties' must be created in the
 src/test/resources directory. The content of the file should be
 
-facebook.appId=<app ID>
-facebook.appSecret=<app Secret>
+facebook.appId1=<appId>
+facebook.appSecret1=<appSecret>
+facebook.appId2=<appId>
+facebook.appSecret2=<appSecret>
 
 The <app ID> and <app Secret> placeholders should contain the values for your application.
 

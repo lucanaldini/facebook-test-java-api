@@ -49,6 +49,12 @@ public interface FacebookTestUserAccount
     void makeFriends(FacebookTestUserAccount friend);
 
     /**
+     * Gives access to change settings for the test user.
+     * @return An {@code AccountSettingsChanger} responsible for updating the account settings.
+     */
+    AccountSettingsChanger changeAccountSettings();
+
+    /**
      * @return A JSON string array of /me/friends
      */
     String getFriends();
@@ -147,6 +153,11 @@ public interface FacebookTestUserAccount
      * @return The login URL for this test user.
      */
     String loginUrl();
+
+    /**
+     * @return The password for the test user.
+     */
+    String getPassword();
 
     /**
      * @return The JSON string representation of the id, access token and login URL.

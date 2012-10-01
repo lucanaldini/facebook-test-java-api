@@ -1,3 +1,8 @@
+Version 1.1.6
+=============
+  o Added support for changing test user name and password.
+  o Added method for accessing test user password when it has been created.
+
 Version 1.1.5
 =============
   o Bugfix for NPE when calling facebookStore.createTestUser(false,"...");
