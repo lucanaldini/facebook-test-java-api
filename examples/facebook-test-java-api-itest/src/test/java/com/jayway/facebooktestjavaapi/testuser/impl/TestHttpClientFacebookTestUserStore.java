@@ -3,7 +3,6 @@ package com.jayway.facebooktestjavaapi.testuser.impl;
 import com.jayway.facebooktestjavaapi.testuser.FacebookTestUserAccount;
 import com.jayway.facebooktestjavaapi.testuser.FacebookTestUserStore;
 import com.jayway.jsonassert.JsonAssert;
-import com.jayway.jsonassert.JsonAsserter;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -48,6 +47,7 @@ import static org.mockito.Mockito.when;
  * Time: 7:29 AM
  */
 
+@Ignore
 public class TestHttpClientFacebookTestUserStore {
 
     private static HttpClientFacebookTestUserStore facebookStore1;
