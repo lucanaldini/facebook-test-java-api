@@ -135,6 +135,11 @@ public interface FacebookTestUserAccount
     String getUserDetails();
 
     /**
+     * @return A JSON string containing user details for this test user (/me) with specified user fields
+     */
+    String getUserDetails(String fields);
+
+    /**
      * @return The Facebook ID for this test user
      */
     String id();

@@ -125,6 +125,10 @@ public class HttpClientFacebookTestUserAccount implements FacebookTestUserAccoun
         return get("%s", id());
     }
 
+    public String getUserDetails(String fields) {
+        return getWithFields("%s", fields, id());
+    }
+
     public String id() {
         return userDataAsString("id");
     }
@@ -159,6 +163,9 @@ public class HttpClientFacebookTestUserAccount implements FacebookTestUserAccoun
         return helper.get(resource, helper.buildList("access_token", accessToken()), pathParams);
     }
 
+    private String getWithFields(String resource, String fields, Object... pathParams) {
+        return helper.get(resource, helper.buildList("access_token", accessToken(), "fields", fields), pathParams);
+    }
 
     private class DefaultAccountSettingsChanger implements AccountSettingsChanger
     {
