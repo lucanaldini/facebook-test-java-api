@@ -15,7 +15,11 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-import org.junit.*;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Ignore;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,7 +29,12 @@ import java.util.Properties;
 import java.util.regex.Pattern;
 
 import static org.hamcrest.Matchers.equalTo;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -330,7 +339,7 @@ public class TestHttpClientFacebookTestUserStore {
 
     @Test
     public void testCreateFacebookAccountThatHaveToAcceptPermissions() {
-        FacebookTestUserAccount createdAccount = facebookStore1.createTestUser(false, "email,user_about_me,user_birthday");
+        FacebookTestUserAccount createdAccount = facebookStore1.createTestUser(false, "email,user_about_me");
 
         assertNull(createdAccount.accessToken());
     }
