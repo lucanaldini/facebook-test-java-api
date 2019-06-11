@@ -19,10 +19,9 @@
     <parent>
         <groupId>com.github.lucanaldini</groupId>
         <artifactId>facebook-test-java-api-parent</artifactId>
-        <version>1.1.6-SNAPSHOT</version>
+        <version>1.1.7-SNAPSHOT</version>
     </parent>
     <artifactId>facebook-test-java-api</artifactId>
-    <version>1.1.6-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>facebook-test-java-api</name>
     <description>Java API for testing Facebook application integration</description>
